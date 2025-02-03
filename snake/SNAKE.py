@@ -6,7 +6,7 @@
 #             The player controls a snake that grows by eating apples.
 #             Features both normal and hard modes with different mechanics.
 #########################################
-
+#fix timer for in game 
 # Required imports
 import pygame
 from math import sqrt
@@ -335,10 +335,21 @@ while inPlay:
     elapsed = continuousTime - resetTime
     timeLeft = abs(elapsed - 20)
 
+    # Check if timer ran out
+    if timeLeft == 0:
+        if len(segx) > 3:  # Maintain minimum snake length
+            segx.pop()
+            segy.pop()
+            score -= 1
+        resetTime = pygame.time.get_ticks() // 1000
+        badappleSound.play()
+
     # Increase game speed at score milestones
-    if score in (5, 10, 15, 20) and timechange:
+    if score in (5, 20, 30, 40) and timechange:
         dlay -= 10
         timechange = False
+
+
 
     # Hard mode specific mechanics
     if hardMode:

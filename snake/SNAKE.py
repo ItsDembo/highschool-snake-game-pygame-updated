@@ -2,78 +2,91 @@
 # Programmer: Ori Dembo
 # Date: 21/11/2021
 # File Name: snake_template.py
-# Description: This program is a Snake Game.
-#               It demonstrates how to move and lengthen the snake.
+# Description: A Snake Game implementation in Pygame.
+#             The player controls a snake that grows by eating apples.
+#             Features both normal and hard modes with different mechanics.
 #########################################
+
+# Required imports
 import pygame
 from math import sqrt
-
 pygame.init()
 from random import randint
 from random import randrange
-
-font = pygame.font.SysFont("Ariel Black", 40)
 from time import sleep
 
-# Window dimensions
+# Initialize font
+font = pygame.font.SysFont("Ariel Black", 40)
+
+# Window setup
 WIDTH = 800
 HEIGHT = 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-# Colors
+# Color definitions
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-DARK_RED = (200, 0, 0)  # Darker red for pressed state
+DARK_RED = (200, 0, 0)      # Used for button pressed state
 GREEN = (0, 255, 0)
-DARK_GREEN = (0, 200, 0)  # Darker green for pressed state
+DARK_GREEN = (0, 200, 0)    # Used for button pressed state
 YELLOW = (255, 255, 0)
 ORANGE = (255, 102, 0)
 BLUE = (0, 0, 255)
 BROWN = (26, 9, 0)
 outline = 0
 
-# Game variables
-dlay = 60
-timechange = True
+# Game state variables
+dlay = 60                   # Game speed/delay
+timechange = True           # Flag for time-based difficulty changes
 score = 0
-time = 20
+time = 20                   # Initial time limit
 
-# Button dimensions and states
-rectX, rectY, rectW, rectH = WIDTH - 150, 50, 100, 50  # Info button in top right
-cirX, cirY, cirR = WIDTH // 2, HEIGHT - 100, 50  # Start button in bottom middle
-hardX, hardY, hardW, hardH = 50, 50, 100, 50  # Hard mode button in top left
+# UI Button configurations
+# Info button positioned in top right
+rectX, rectY, rectW, rectH = WIDTH - 150, 50, 100, 50  
+# Start button positioned in bottom middle
+cirX, cirY, cirR = WIDTH // 2, HEIGHT - 100, 50  
+# Hard mode button positioned in top left
+hardX, hardY, hardW, hardH = 50, 50, 100, 50  
+
+# Button state trackers
 info_pressed = False
 start_pressed = False
 hard_pressed = False
 
-# Helper function for distance calculation
+# Calculate distance between two points
 def distance(x1, y1, x2, y2):
     return sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
-##############       snake's properties    #####################
+################ Snake Configuration ################
 
+# Snake size and movement constants
 BODY_SIZE = 10
-HSPEED = 20
-VSPEED = 20
+HSPEED = 20                 # Horizontal movement speed
+VSPEED = 20                 # Vertical movement speed
 
+# Initial movement direction (starts moving up)
 speedX = 0
 speedY = -VSPEED
 
-# Initialize snake segments
+# Initialize snake with 3 segments at starting position
 segx = [int(WIDTH / 2.)] * 3
 segy = [HEIGHT - 5, HEIGHT + VSPEED, HEIGHT + 2 * VSPEED]
 
-# Food positions
+# Initialize food positions with spacing from edges
 foodX = randrange(20, WIDTH - 20, BODY_SIZE)
 BadfoodX = randrange(20, WIDTH - 20, BODY_SIZE)
 foodY = randrange(20, HEIGHT - 20, BODY_SIZE)
 BadfoodY = randrange(20, HEIGHT - 20, BODY_SIZE)
 
+# Game mode and direction tracking
 hardMode = False
-lastDirection = "UP"  # Track last direction for proper body segment orientation
+lastDirection = "UP"        # Used for proper body segment orientation
 
-###############loading images and sounds #####################
+################ Asset Loading ################
+
+# Load and configure background images
 backgroundEnd = pygame.image.load("images/GameOver.png")
 backgroundEnd = pygame.transform.scale(backgroundEnd, (800, 600))
 backgroundEnd = backgroundEnd.convert_alpha()
@@ -90,7 +103,7 @@ backgroundINFO = pygame.image.load("images/infoScreenSnake.png")
 backgroundINFO = pygame.transform.scale(backgroundINFO, (800, 600))
 backgroundINFO = backgroundINFO.convert_alpha()
 
-# Load and set up sounds
+# Load and configure audio
 pygame.mixer.music.load("images/snakeTheme.wav")
 pygame.mixer.music.set_volume(0.5)
 appleSound = pygame.mixer.Sound("images/apple.wav")
@@ -100,7 +113,7 @@ badappleSound.set_volume(0.8)
 gameOverSound = pygame.mixer.Sound("images/SnakeGameOverSound.wav")
 gameOverSound.set_volume(0.8)
 
-# Load snake head images
+# Load snake head images for each direction
 snakeHL = pygame.image.load("images/snakeHeadLeft.png")
 snakeHR = pygame.image.load("images/SnakeHeadRight.png")
 snakeHU = pygame.image.load("images/SnakeHeadUp.png")
@@ -108,14 +121,14 @@ snakeHD = pygame.image.load("images/snakeHeadDown.png")
 snakeBY = pygame.image.load("images/snakeBodyD.png")
 snakeBX = pygame.image.load("images/snakeBodyR.png")
 
-# Scale snake head images
+# Scale snake head images to proper size
 snakeHR = pygame.transform.scale(snakeHR, (BODY_SIZE + 20, BODY_SIZE + 20))
 snakeHL = pygame.transform.scale(snakeHL, (BODY_SIZE + 20, BODY_SIZE + 20))
 snakeHU = pygame.transform.scale(snakeHU, (BODY_SIZE + 20, BODY_SIZE + 20))
 snakeHD = pygame.transform.scale(snakeHD, (BODY_SIZE + 20, BODY_SIZE + 20))
-SL = snakeHU
+SL = snakeHU                # Initial head direction
 
-# Load and scale other images
+# Load and scale UI and gameplay images
 infoBTTN = pygame.image.load("images/info.png")
 infoBTTN = pygame.transform.scale(infoBTTN, (BODY_SIZE + 50, BODY_SIZE + 50))
 
@@ -127,7 +140,7 @@ Badapple = pygame.image.load("images/badapple.png")
 apple = pygame.transform.scale(apple, (BODY_SIZE + 20, BODY_SIZE + 20))
 Badapple = pygame.transform.scale(Badapple, (BODY_SIZE + 20, BODY_SIZE + 20))
 
-##################                functions              ##########################
+################ Game Screen Functions ################
 
 def endGameScreen():
     """Display game over screen with final score"""
@@ -137,19 +150,19 @@ def endGameScreen():
     pygame.display.update()
 
 def startGameScreen():
-    """Display start screen with buttons"""
+    """Display start screen with interactive buttons"""
     screen.blit(backgroundStart, (0, 0))
     
-    # Draw buttons with pressed state colors
+    # Draw info button
     screen.blit(infoBTTN, (rectX, rectY))
     
-    # Start button color changes when pressed
+    # Draw start button with pressed state visual feedback
     circle_color = DARK_RED if start_pressed else RED
     pygame.draw.circle(screen, circle_color, (cirX, cirY), cirR, 0)
     startTxt = font.render('START', 1, BLACK)
     screen.blit(startTxt, (cirX - 45, cirY - 15))
     
-    # Hard mode button color changes when pressed or active
+    # Draw hard mode toggle with active/pressed state indication
     hard_color = DARK_GREEN if hard_pressed or hardMode else GREEN
     pygame.draw.rect(screen, hard_color, (hardX, hardY, hardW, hardH))
     hardTxt = font.render('Hard Mode', 1, BLACK)
@@ -158,29 +171,29 @@ def startGameScreen():
     pygame.display.update()
 
 def instructionsScreen():
-    """Display instructions screen"""
+    """Display game instructions screen"""
     screen.blit(backgroundINFO, (0, 0))
     pygame.display.update()
 
 def redraw():
-    """Update game display"""
+    """Update game display with current state"""
     screen.blit(backgroundGame, (0, 0))
     
-    # Draw snake head
+    # Draw snake head at current position
     screen.blit(SL, (segx[0] - 15, segy[0] - 15))
     
-    # Draw food
+    # Draw food items
     screen.blit(apple, (foodX - 20, foodY - 20))
     if hardMode:
         screen.blit(Badapple, (BadfoodX - 20, BadfoodY - 20))
 
-    # Draw score and time
+    # Draw score and remaining time
     scoretxt = font.render('score:' + str(score), 1, WHITE)
     timeleft = font.render('time left:' + str(timeLeft), 1, WHITE)
     screen.blit(scoretxt, (10, 550))
     screen.blit(timeleft, (630, 550))
 
-    # Draw snake body with proper orientation
+    # Draw snake body segments with correct orientation
     for i in range(1, len(segx)):
         if lastDirection in ["LEFT", "RIGHT"]:
             screen.blit(snakeBX, (segx[i] - 10, segy[i] - 10))
@@ -189,12 +202,14 @@ def redraw():
             
     pygame.display.update()
 
-######################## INTRO & INSTRUCTION SECTION ##########################
+################ Game Loop Sections ################
 
+# Start screen loop
 introScreen = True
 showRules = False
 while introScreen:
     for event in pygame.event.get():
+        # Handle game exit
         if event.type == pygame.QUIT:
             introScreen = False
             gameOver = False
@@ -205,7 +220,7 @@ while introScreen:
         if event.type == pygame.MOUSEBUTTONDOWN:
             (mouseX, mouseY) = pygame.mouse.get_pos()
             
-            # Info button
+            # Handle info button click
             if mouseX > rectX and mouseX < rectX + rectW and mouseY > rectY and mouseY < rectY + rectH:
                 info_pressed = True
                 showRules = True
@@ -224,36 +239,39 @@ while introScreen:
                             exit()
                     instructionsScreen()
             
-            # Hard mode button
+            # Handle hard mode toggle
             if mouseX > hardX and mouseX < hardX + hardW and mouseY > hardY and mouseY < hardY + hardH:
                 hard_pressed = True
-                hardMode = not hardMode  # Toggle hard mode
-                pygame.time.delay(100)  # Brief delay to show pressed state
+                hardMode = not hardMode
+                pygame.time.delay(100)  # Visual feedback delay
                 hard_pressed = False
             
-            # Start button
+            # Handle start button click
             if distance(mouseX, mouseY, cirX, cirY) < cirR:
                 start_pressed = True
-                pygame.time.delay(100)  # Brief delay to show pressed state
+                pygame.time.delay(100)  # Visual feedback delay
                 introScreen = False
                 starttime = pygame.time.get_ticks() // 1000
                 
+        # Reset button states on mouse release
         if event.type == pygame.MOUSEBUTTONUP:
             info_pressed = False
             start_pressed = False
                 
     startGameScreen()
 
-########################          MAIN              ##########################
+################ Main Game Loop ################
 
 inPlay = True
 resetTime = pygame.time.get_ticks() // 1000
 
+# Start background music when game begins
 if inPlay:
     pygame.mixer.music.play(loops=-1)
 
 print("Use the arrows to control the snake.")
 while inPlay:
+    # Handle game exit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             inPlay = False
@@ -264,7 +282,7 @@ while inPlay:
     continuousTime = pygame.time.get_ticks() // 1000
     keys = pygame.key.get_pressed()
     
-    # Handle movement and update direction
+    # Handle directional input and update snake head orientation
     if keys[pygame.K_LEFT] and speedX == 0:
         speedX = -HSPEED
         speedY = 0
@@ -289,20 +307,20 @@ while inPlay:
         SL = snakeHD
         lastDirection = "DOWN"
 
-    # Handle wrapping in normal mode
+    # Screen wrapping in normal mode
     if not hardMode:
         if segx[0] < 0: segx[0] = WIDTH
         if segy[0] < 0: segy[0] = HEIGHT
         if segx[0] > WIDTH: segx[0] = 0
         if segy[0] > HEIGHT: segy[0] = 0
 
-    # Check for collision with self
+    # Check for snake self-collision
     for i in range(1, len(segx)):
         if segx[0] == segx[i] and segy[0] == segy[i]:
             inPlay = False
             gameOver = True
 
-    # Handle food collection
+    # Handle good apple collection
     if distance(foodX, foodY, segx[0], segy[0]) < 25:
         foodX = randrange(20, WIDTH - 20, BODY_SIZE)
         foodY = randrange(20, HEIGHT - 20, BODY_SIZE)
@@ -313,47 +331,51 @@ while inPlay:
         resetTime = pygame.time.get_ticks() // 1000
         appleSound.play()
 
+    # Update time remaining
     elapsed = continuousTime - resetTime
     timeLeft = abs(elapsed - 20)
 
-    # Increase difficulty with score
+    # Increase game speed at score milestones
     if score in (5, 10, 15, 20) and timechange:
         dlay -= 10
         timechange = False
 
-    # Hard mode specific logic
+    # Hard mode specific mechanics
     if hardMode:
+        # Game over conditions for hard mode
         if (score == -2 and distance(BadfoodX, BadfoodY, segx[0], segy[0]) < 20) or timeLeft == 0:
             inPlay = False
             gameOver = True
 
+        # No screen wrapping in hard mode
         if segx[0] < 0 or segx[0] > WIDTH or segy[0] < 0 or segy[0] > HEIGHT:
             inPlay = False
             gameOver = True
 
+        # Handle bad apple collection
         if distance(BadfoodX, BadfoodY, segx[0], segy[0]) < 20:
             BadfoodX = randrange(20, WIDTH - 20, BODY_SIZE)
             BadfoodY = randrange(20, HEIGHT - 20, BODY_SIZE)
             timechange = False
-            if len(segx) > 3:  # Prevent snake from getting too short
+            if len(segx) > 3:  # Maintain minimum snake length
                 segx.pop()
                 segy.pop()
             score -= 1
             badappleSound.play()
 
-    # Move snake segments
+    # Update snake segment positions
     for i in range(len(segx) - 1, 0, -1):
         segx[i] = segx[i - 1]
         segy[i] = segy[i - 1]
         
-    # Move head
+    # Update snake head position
     segx[0] = segx[0] + speedX
     segy[0] = segy[0] + speedY
     
     redraw()
     pygame.time.delay(dlay)
 
-####################### GAME OVER SECTION ###############################
+################ Game Over Loop ################
 
 if gameOver:
     gameOverSound.play()
@@ -361,6 +383,7 @@ if gameOver:
 while gameOver:
     for event in pygame.event.get():
         keys = pygame.key.get_pressed()
+        # Allow restart with spacebar
         if keys[pygame.K_SPACE]:
             introScreen = True
             gameOver = False

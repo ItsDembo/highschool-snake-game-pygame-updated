@@ -119,7 +119,7 @@ snakeHR = pygame.image.load("images/SnakeHeadRight.png")
 snakeHU = pygame.image.load("images/SnakeHeadUp.png")
 snakeHD = pygame.image.load("images/snakeHeadDown.png")
 snakeBY = pygame.image.load("images/snakeBodyD.png")
-snakeBX = pygame.image.load("images/snakeBodyR.png")
+
 
 # Scale snake head images to proper size
 snakeHR = pygame.transform.scale(snakeHR, (BODY_SIZE + 20, BODY_SIZE + 20))
@@ -133,7 +133,7 @@ infoBTTN = pygame.image.load("images/info.png")
 infoBTTN = pygame.transform.scale(infoBTTN, (BODY_SIZE + 50, BODY_SIZE + 50))
 
 snakeBY = pygame.transform.scale(snakeBY, (BODY_SIZE + 10, BODY_SIZE + 10))
-snakeBX = pygame.transform.scale(snakeBX, (BODY_SIZE + 10, BODY_SIZE + 10))
+
 
 apple = pygame.image.load("images/apple.png")
 Badapple = pygame.image.load("images/badapple.png")
@@ -195,9 +195,6 @@ def redraw():
 
     # Draw snake body segments with correct orientation
     for i in range(1, len(segx)):
-        if lastDirection in ["LEFT", "RIGHT"]:
-            screen.blit(snakeBX, (segx[i] - 10, segy[i] - 10))
-        else:
             screen.blit(snakeBY, (segx[i] - 10, segy[i] - 10))
             
     pygame.display.update()
@@ -337,19 +334,17 @@ while inPlay:
 
     # Check if timer ran out
     if timeLeft == 0:
-        if len(segx) > 3:  # Maintain minimum snake length
-            segx.pop()
-            segy.pop()
-            score -= 1
         resetTime = pygame.time.get_ticks() // 1000
+        segx.pop()
+        segy.pop()
+        score -= 1
         badappleSound.play()
+
 
     # Increase game speed at score milestones
     if score in (5, 20, 30, 40) and timechange:
         dlay -= 10
         timechange = False
-
-
 
     # Hard mode specific mechanics
     if hardMode:
@@ -368,9 +363,8 @@ while inPlay:
             BadfoodX = randrange(20, WIDTH - 20, BODY_SIZE)
             BadfoodY = randrange(20, HEIGHT - 20, BODY_SIZE)
             timechange = False
-            if len(segx) > 3:  # Maintain minimum snake length
-                segx.pop()
-                segy.pop()
+            segx.pop()
+            segy.pop()
             score -= 1
             badappleSound.play()
 
@@ -387,24 +381,3 @@ while inPlay:
     pygame.time.delay(dlay)
 
 ################ Game Over Loop ################
-
-if gameOver:
-    gameOverSound.play()
-    
-while gameOver:
-    for event in pygame.event.get():
-        keys = pygame.key.get_pressed()
-        # Allow restart with spacebar
-        if keys[pygame.K_SPACE]:
-            introScreen = True
-            gameOver = False
-        if event.type == pygame.QUIT:
-            gameOver = False
-            pygame.quit()
-            exit()
-            
-    pygame.mixer.music.stop()
-    endGameScreen()
-    pygame.time.delay(dlay)
-
-pygame.quit()

@@ -80,6 +80,12 @@ BadfoodX = randrange(20, WIDTH - 20, BODY_SIZE)
 foodY = randrange(20, HEIGHT - 20, BODY_SIZE)
 BadfoodY = randrange(20, HEIGHT - 20, BODY_SIZE)
 
+# Saw configuration
+sawX = randrange(20, WIDTH - 20)
+sawY = 20
+sawSpeed = 5
+sawMovingDown = True
+
 # Game mode and direction tracking
 hardMode = False
 lastDirection = "UP"        # Used for proper body segment orientation
@@ -120,6 +126,9 @@ snakeHU = pygame.image.load("images/SnakeHeadUp.png")
 snakeHD = pygame.image.load("images/snakeHeadDown.png")
 snakeBY = pygame.image.load("images/snakeBodyD.png")
 
+# Load saw image
+saw = pygame.image.load("images/saw.png")
+saw = pygame.transform.scale(saw, (BODY_SIZE + 20, BODY_SIZE + 20))
 
 # Scale snake head images to proper size
 snakeHR = pygame.transform.scale(snakeHR, (BODY_SIZE + 20, BODY_SIZE + 20))
@@ -133,7 +142,6 @@ infoBTTN = pygame.image.load("images/info.png")
 infoBTTN = pygame.transform.scale(infoBTTN, (BODY_SIZE + 50, BODY_SIZE + 50))
 
 snakeBY = pygame.transform.scale(snakeBY, (BODY_SIZE + 10, BODY_SIZE + 10))
-
 
 apple = pygame.image.load("images/apple.png")
 Badapple = pygame.image.load("images/badapple.png")
@@ -186,6 +194,7 @@ def redraw():
     screen.blit(apple, (foodX - 20, foodY - 20))
     if hardMode:
         screen.blit(Badapple, (BadfoodX - 20, BadfoodY - 20))
+        screen.blit(saw, (sawX - 20, sawY - 20))
 
     # Draw score and remaining time
     scoretxt = font.render('score:' + str(score), 1, WHITE)
@@ -314,6 +323,10 @@ while inPlay:
     # Check for snake self-collision
     for i in range(1, len(segx)):
         if segx[0] == segx[i] and segy[0] == segy[i]:
+            if hardMode:
+                gameOverSound.play()
+                endGameScreen()
+                pygame.time.delay(2000)
             inPlay = False
             gameOver = True
 
@@ -340,7 +353,6 @@ while inPlay:
         score -= 1
         badappleSound.play()
 
-
     # Increase game speed at score milestones
     if score in (5, 20, 30, 40) and timechange:
         dlay -= 10
@@ -348,13 +360,37 @@ while inPlay:
 
     # Hard mode specific mechanics
     if hardMode:
+        # Move saw up and down
+        if sawMovingDown:
+            sawY += sawSpeed
+            if sawY >= HEIGHT - 20:
+                sawMovingDown = False
+        else:
+            sawY -= sawSpeed
+            if sawY <= 20:
+                sawMovingDown = True
+
+        # Check for saw collision
+        if distance(sawX, sawY, segx[0], segy[0]) < 20:
+            gameOverSound.play()
+            endGameScreen()
+            pygame.time.delay(2000)
+            inPlay = False
+            gameOver = True
+
         # Game over conditions for hard mode
         if (score == -2 and distance(BadfoodX, BadfoodY, segx[0], segy[0]) < 20) or timeLeft == 0:
+            gameOverSound.play()
+            endGameScreen()
+            pygame.time.delay(2000)
             inPlay = False
             gameOver = True
 
         # No screen wrapping in hard mode
         if segx[0] < 0 or segx[0] > WIDTH or segy[0] < 0 or segy[0] > HEIGHT:
+            gameOverSound.play()
+            endGameScreen()
+            pygame.time.delay(2000)
             inPlay = False
             gameOver = True
 
